@@ -1,0 +1,13 @@
+{
+  "name": "traincam",
+  "version": "1.0.2",
+  "title": "Train Camera Tracker",
+  "author": "ocelus_ftnl",
+  "contact": "",
+  "homepage": "",
+  "factorio_version": "2.0",
+  "dependencies": [
+    "base >= 2.0.0"
+  ],
+  "description": "Adds a smooth tracking camera allowing you to target and follow a moving train using the /track_train command or a custom shortcut."
+}
