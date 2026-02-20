@@ -55,10 +55,29 @@ function traincam.open_window(player, cam_state)
     title_bar.drag_target = main
   end
 
-  title_bar.add {
+  local title_label = title_bar.add {
     type = "label",
     style = "frame_title",
     caption = {"gui.traincam-title"},
+    ignored_by_interaction = fullscreen,
+  }
+  cam_state.title_label = title_label
+
+  local surface_trains = 0
+  if cam_state.target and cam_state.target.valid then
+    surface_trains = #player.force.get_trains(cam_state.target.surface)
+  end
+
+  if surface_trains <= 1 then
+    title_label.caption = {"gui.holy-traincam-title"}
+  else
+    title_label.caption = {"", {"gui.traincam-title"}, " - N°", id}
+  end
+
+  title_bar.add {
+    type = "label",
+    style = "frame_title",
+    caption = name,
     ignored_by_interaction = fullscreen,
   }
 
@@ -165,8 +184,8 @@ function traincam.open_window(player, cam_state)
   }
   camera.style.horizontally_stretchable = true
   camera.style.vertically_stretchable = true
-  camera.style.minimal_width = 200
-  camera.style.minimal_height = 200
+  camera.style.minimal_width = 100
+  camera.style.minimal_height = 100
 
   cam_state.main = main
   cam_state.camera = camera
@@ -299,12 +318,30 @@ function traincam.tick()
   if not storage.traincam_players then return end
 
   local lock_f = 0.1
+  -- Optimisation : on met à jour le titre uniquement 1 fois par seconde (60 ticks)
+  local should_update_titles = (game.tick % 60 == 0)
 
   for player_index, data in pairs(storage.traincam_players) do
+    local player = nil
+
+    if should_update_titles then
+      player = game.get_player(player_index)
+    end
+
     for id, cam_state in pairs(data.cameras) do
       local target = cam_state.target
 
       if target and target.valid then
+        -- Rafraîchissement automatique du titre selon le nombre de trains sur CETTE surface
+        if should_update_titles and player and cam_state.title_label and cam_state.title_label.valid then
+          local surface_trains = #player.force.get_trains(target.surface)
+          if surface_trains <= 1 then
+            cam_state.title_label.caption = {"", {"gui.traincam-title"}, " - Train Principal"}
+          else
+            cam_state.title_label.caption = {"", {"gui.traincam-title"}, " - Train N°", id}
+          end
+        end
+
         local pos = target.position
         cam_state.x = cam_state.x + lock_f * (pos.x - cam_state.x)
         cam_state.y = cam_state.y + lock_f * (pos.y - cam_state.y)
@@ -315,7 +352,7 @@ function traincam.tick()
           cam_state.camera.surface_index = target.surface.index
         end
       else
-        local player = game.get_player(player_index)
+        if not player then player = game.get_player(player_index) end
         if player then
           traincam.close_camera(player, id)
         end
