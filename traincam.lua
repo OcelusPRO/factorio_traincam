@@ -43,11 +43,9 @@ function traincam.open_window(player, cam_state)
 
   local size = get_cam_size(player, cam_state)
   main.style.size = size
-
-  -- Centre toujours la fenêtre quand on la recrée (évite qu'elle apparaisse hors écran)
   main.auto_center = true
 
-  -- === Ligne 1 : Barre de titre ===
+  -- === Barre de titre ===
   local title_bar = main.add {type = "flow", direction = "horizontal"}
   title_bar.style.vertical_align = "center"
 
@@ -64,32 +62,19 @@ function traincam.open_window(player, cam_state)
   cam_state.title_label = title_label
 
   local surface_trains = 0
-  local train_id = "?"
   if cam_state.target and cam_state.target.valid then
     surface_trains = #game.train_manager.get_trains({surface = cam_state.target.surface, force = player.force})
-    if cam_state.target.train then
-      train_id = cam_state.target.train.id
-    end
   end
 
   if surface_trains <= 1 then
-    title_label.caption = {"gui.holy-holy-traincam-title"}
+    title_label.caption = {"", {"gui.traincam-title"}, " - Train Principal"}
   else
-    title_label.caption = {"", {"gui.traincam-title"}, " - N°", train_id}
+    local train_id = cam_state.target.train and cam_state.target.train.id or id
+    title_label.caption = {"", {"gui.traincam-title"}, " - Train N°", train_id}
   end
 
-  title_bar.add {
-    type = "label",
-    style = "frame_title",
-    caption = name,
-    ignored_by_interaction = fullscreen,
-  }
-
   if fullscreen then
-    title_bar.add {
-      type = "empty-widget",
-      style = "draggable_space",
-    }
+    title_bar.add {type = "empty-widget", style = "draggable_space"}
   else
     local drag_space = title_bar.add {
       type = "empty-widget",
@@ -100,6 +85,16 @@ function traincam.open_window(player, cam_state)
     drag_space.style.height = 24
     drag_space.style.right_margin = 8
   end
+
+  -- Bouton Paramètres (Nouveau)
+  title_bar.add {
+    type = "sprite-button",
+    name = "traincam-settings",
+    style = "frame_action_button",
+    sprite = "utility/settings",
+    tooltip = {"gui.traincam-tooltip-settings"},
+    tags = tags
+  }
 
   title_bar.add {
     type = "sprite-button",
@@ -119,63 +114,7 @@ function traincam.open_window(player, cam_state)
     tags = tags
   }
 
-  -- === Ligne 2 : Barre de contrôles ===
-  local controls_bar = main.add {
-    type = "flow",
-    direction = "horizontal"
-  }
-  controls_bar.style.vertical_align = "center"
-  controls_bar.style.top_margin = 4
-  controls_bar.style.bottom_margin = 8
-  controls_bar.style.left_margin = 8
-  controls_bar.style.right_margin = 8
-
-  -- Taille
-  local size_flow = controls_bar.add{type = "flow", name = "size-flow", direction = "horizontal"}
-  size_flow.style.vertical_align = "center"
-  size_flow.style.right_margin = 24
-
-  size_flow.add{type = "label", caption = {"gui.traincam-size-label"}}
-
-  local size_input = size_flow.add {
-    type = "textfield",
-    name = "traincam-size-input",
-    text = tostring(cam_state.size),
-    numeric = true,
-    allow_decimal = false,
-    clear_and_focus_on_right_click = true,
-    tags = tags
-  }
-  size_input.style.width = 60
-  size_input.enabled = not fullscreen
-
-  local size_apply = size_flow.add {
-    type = "sprite-button",
-    name = "traincam-size-apply",
-    style = "tool_button",
-    sprite = "utility/check_mark",
-    tooltip = {"gui.traincam-apply-size"},
-    tags = tags
-  }
-  size_apply.style.size = 26
-  size_apply.enabled = not fullscreen
-
-  -- Zoom
-  local zoom_flow = controls_bar.add{type = "flow", direction = "horizontal"}
-  zoom_flow.style.vertical_align = "center"
-  zoom_flow.add{type = "label", caption = {"gui.traincam-zoom-label"}}
-
-  local zoom_slider = zoom_flow.add {
-    type = "slider",
-    name = "traincam-zoom",
-    value = cam_state.zoom,
-    minimum_value = 1,
-    maximum_value = #zoom_map,
-    tags = tags
-  }
-  zoom_slider.style.width = 120
-
-  -- === Ligne 3 : Caméra ===
+  -- === Caméra ===
   local content = main.add {
     type = "frame",
     style = "inside_shallow_frame",
@@ -188,12 +127,121 @@ function traincam.open_window(player, cam_state)
   }
   camera.style.horizontally_stretchable = true
   camera.style.vertically_stretchable = true
-  camera.style.minimal_width = 100
-  camera.style.minimal_height = 100
+  camera.style.minimal_width = 200
+  camera.style.minimal_height = 200
 
   cam_state.main = main
   cam_state.camera = camera
-  cam_state.size_input = size_input
+end
+
+function traincam.open_settings_window(player, id)
+  local data = get_player_data(player)
+  local cam_state = data.cameras[id]
+  if not cam_state then return end
+
+  -- Si déjà ouverte, on la ferme (effet toggle)
+  if cam_state.settings_main and cam_state.settings_main.valid then
+    cam_state.settings_main.destroy()
+    cam_state.settings_main = nil
+    return
+  end
+
+  local tags = { traincam_id = id }
+  local frame = player.gui.screen.add {
+    type = "frame",
+    name = "traincam-settings-" .. id,
+    direction = "vertical",
+    tags = tags
+  }
+  frame.auto_center = true
+
+  -- Titre de la popup
+  local title = frame.add{type="flow", direction="horizontal"}
+  title.style.vertical_align = "center"
+  title.drag_target = frame
+  title.add{type="label", style="frame_title", caption={"gui.traincam-settings-title"}}
+  local drag = title.add{type="empty-widget", style="draggable_space"}
+  drag.style.horizontally_stretchable = true
+  drag.style.height = 24
+  drag.style.right_margin = 8
+  title.add{
+    type = "sprite-button",
+    name = "traincam-settings-close",
+    style = "frame_action_button",
+    sprite = "utility/close",
+    tags = tags
+  }
+
+  -- Contenu de la popup
+  local content = frame.add{type="frame", style="inside_shallow_frame_with_padding", direction="vertical"}
+
+  local size_flow = content.add{type="flow", direction="horizontal"}
+  size_flow.style.vertical_align = "center"
+  size_flow.style.bottom_margin = 8
+  size_flow.add{type="label", caption={"gui.traincam-size-label"}}
+  local size_input = size_flow.add{
+    type = "textfield",
+    name = "traincam-size-input",
+    text = tostring(cam_state.size),
+    numeric = true,
+    allow_decimal = false,
+    tags = tags
+  }
+  size_input.style.width = 60
+  cam_state.settings_size_input = size_input
+
+  local zoom_flow = content.add{type="flow", direction="horizontal"}
+  zoom_flow.style.vertical_align = "center"
+  zoom_flow.add{type="label", caption={"gui.traincam-zoom-label"}}
+  local zoom_slider = zoom_flow.add{
+    type = "slider",
+    name = "traincam-zoom",
+    value = cam_state.zoom,
+    minimum_value = 1,
+    maximum_value = #zoom_map,
+    tags = tags
+  }
+  zoom_slider.style.width = 120
+
+  -- Bouton Appliquer
+  local buttons = frame.add{type="flow", direction="horizontal"}
+  buttons.style.horizontal_align = "right"
+  buttons.style.horizontally_stretchable = true
+  buttons.style.top_margin = 8
+  buttons.add{
+    type = "button",
+    name = "traincam-settings-apply",
+    caption = {"gui.traincam-apply-settings"},
+    tags = tags
+  }
+
+  cam_state.settings_main = frame
+  player.opened = frame
+end
+
+function traincam.apply_settings(player, id)
+  local data = get_player_data(player)
+  local cam_state = data.cameras[id]
+  if not cam_state then return end
+
+  if cam_state.settings_size_input and cam_state.settings_size_input.valid then
+    local new_size = tonumber(cam_state.settings_size_input.text)
+    if new_size then
+      if new_size < 250 then new_size = 250 end
+      if new_size > 2000 then new_size = 2000 end
+
+      cam_state.size = new_size
+      if cam_state.main and cam_state.main.valid then
+        cam_state.main.style.size = {new_size, new_size}
+      end
+    end
+  end
+
+  -- Fermer la fenêtre de paramètres
+  if cam_state.settings_main and cam_state.settings_main.valid then
+    cam_state.settings_main.destroy()
+    cam_state.settings_main = nil
+  end
 end
 
 function traincam.add_target(player, entity)
@@ -283,8 +331,16 @@ function traincam.on_click(player, element)
     traincam.close_camera(player, id)
   elseif element.name == "traincam-fullscreen" then
     traincam.toggle_fullscreen(player, id)
-  elseif element.name == "traincam-size-apply" then
-    traincam.apply_size(player, id)
+  elseif element.name == "traincam-settings" then
+    traincam.open_settings_window(player, id)
+  elseif element.name == "traincam-settings-close" then
+    local data = get_player_data(player)
+    if data.cameras[id] and data.cameras[id].settings_main then
+      data.cameras[id].settings_main.destroy()
+      data.cameras[id].settings_main = nil
+    end
+  elseif element.name == "traincam-settings-apply" then
+    traincam.apply_settings(player, id)
   end
 end
 
@@ -294,10 +350,9 @@ function traincam.on_confirmed(player, element)
   local id = tags.traincam_id
 
   if element.name == "traincam-size-input" then
-    traincam.apply_size(player, id)
+    traincam.apply_settings(player, id)
   end
 end
-
 function traincam.on_value_changed(player, element)
   local tags = element.tags
   if not tags or not tags.traincam_id then return end
