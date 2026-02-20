@@ -64,14 +64,18 @@ function traincam.open_window(player, cam_state)
   cam_state.title_label = title_label
 
   local surface_trains = 0
+  local train_id = "?"
   if cam_state.target and cam_state.target.valid then
-    surface_trains = #player.force.get_trains(cam_state.target.surface)
+    surface_trains = #game.train_manager.get_trains({surface = cam_state.target.surface, force = player.force})
+    if cam_state.target.train then
+      train_id = cam_state.target.train.id
+    end
   end
 
   if surface_trains <= 1 then
-    title_label.caption = {"gui.holy-traincam-title"}
+    title_label.caption = {"gui.holy-holy-traincam-title"}
   else
-    title_label.caption = {"", {"gui.traincam-title"}, " - N°", id}
+    title_label.caption = {"", {"gui.traincam-title"}, " - N°", train_id}
   end
 
   title_bar.add {
@@ -334,11 +338,12 @@ function traincam.tick()
       if target and target.valid then
         -- Rafraîchissement automatique du titre selon le nombre de trains sur CETTE surface
         if should_update_titles and player and cam_state.title_label and cam_state.title_label.valid then
-          local surface_trains = #player.force.get_trains(target.surface)
+          local surface_trains = #game.train_manager.get_trains({surface = target.surface, force = player.force})
           if surface_trains <= 1 then
-            cam_state.title_label.caption = {"", {"gui.traincam-title"}, " - Train Principal"}
+            cam_state.title_label.caption = {"gui.holy-traincam-title"}
           else
-            cam_state.title_label.caption = {"", {"gui.traincam-title"}, " - Train N°", id}
+            local train_id = target.train and target.train.id or "?"
+            cam_state.title_label.caption = {"", {"gui.traincam-title"}, " - N°", train_id}
           end
         end
 
