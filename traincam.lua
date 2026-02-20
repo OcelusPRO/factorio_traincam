@@ -1,6 +1,4 @@
 local traincam = {}
-local traincam_default_zoom = 7
-local traincam_default_size = 500
 
 local zoom_map = {
   0.25, 0.325, 0.4, 0.5, 0.6, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4
@@ -24,7 +22,7 @@ local function get_cam_size(player, cam_state)
     local scale = player.display_scale
     return {resolution.width / scale, resolution.height / scale}
   else
-    local s = cam_state.size or traincam_default_size
+    local s = cam_state.size or player.mod_settings["traincam-default-size"].value
     return {s, s}
   end
 end
@@ -91,7 +89,7 @@ function traincam.open_window(player, cam_state)
     type = "sprite-button",
     name = "traincam-settings",
     style = "frame_action_button",
-    sprite = "utility/settings",
+    sprite = "item/iron-gear-wheel",
     tooltip = {"gui.traincam-tooltip-settings"},
     tags = tags
   }
@@ -249,14 +247,16 @@ function traincam.add_target(player, entity)
   local id = data.next_id
   data.next_id = id + 1
 
+  local default_zoom = player.mod_settings["traincam-default-zoom"].value
+  local default_size = player.mod_settings["traincam-default-size"].value
   -- État de cette caméra spécifique
   local cam_state = {
     id = id,
     target = entity,
     x = entity.position.x,
     y = entity.position.y,
-    zoom = traincam_default_zoom,
-    size = traincam_default_size,
+    zoom = default_zoom,
+    size = default_size,
     fullscreen = false
   }
 
