@@ -3,7 +3,7 @@ data:extend({
       type = "int-setting",
       name = "traincam-default-size",
       setting_type = "runtime-per-user",
-      default_value = 4000,
+      default_value = 400,
       minimum_value = 150,
       maximum_value = 2000,
       order = "a"
