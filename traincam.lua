@@ -220,24 +220,28 @@ end
 function traincam.apply_settings(player, id)
   local data = get_player_data(player)
   local cam_state = data.cameras[id]
-  if not cam_state then return end
 
-  if cam_state.settings_size_input and cam_state.settings_size_input.valid then
+  if cam_state and cam_state.settings_size_input and cam_state.settings_size_input.valid then
     local new_size = tonumber(cam_state.settings_size_input.text)
     if new_size then
-      if new_size < 250 then new_size = 250 end
-      if new_size > 2000 then new_size = 2000 end
+      if new_size < 150 then new_size = 150 end
+      if new_size > 5000 then new_size = 5000 end
 
       cam_state.size = new_size
-      if cam_state.main and cam_state.main.valid then
-        cam_state.main.style.size = {new_size, new_size}
+      local main_ui = player.gui.screen["traincam-frame-" .. tostring(id)]
+      if main_ui and main_ui.valid then
+        main_ui.style.size = {new_size, new_size}
       end
     end
   end
 
-  -- Fermer la fenêtre de paramètres
-  if cam_state.settings_main and cam_state.settings_main.valid then
-    cam_state.settings_main.destroy()
+  -- Destruction absolue (pour s'assurer qu'elle disparaît bien)
+  local settings_ui = player.gui.screen["traincam-settings-" .. tostring(id)]
+  if settings_ui and settings_ui.valid then
+    settings_ui.destroy()
+  end
+
+  if cam_state then
     cam_state.settings_main = nil
   end
 end
@@ -266,14 +270,23 @@ end
 
 function traincam.close_camera(player, id)
   local data = get_player_data(player)
-  local cam_state = data.cameras[id]
-  if cam_state then
-    if cam_state.main and cam_state.main.valid then
-      cam_state.main.destroy()
-    end
+
+  -- Destruction absolue via le nom de l'interface (évite les fenêtres orphelines)
+  local settings_ui = player.gui.screen["traincam-settings-" .. tostring(id)]
+  if settings_ui and settings_ui.valid then
+    settings_ui.destroy()
+  end
+
+  local main_ui = player.gui.screen["traincam-frame-" .. tostring(id)]
+  if main_ui and main_ui.valid then
+    main_ui.destroy()
+  end
+
+  if data.cameras[id] then
     data.cameras[id] = nil
   end
 end
+
 
 -- Gère l'activation exclusive du plein écran
 function traincam.toggle_fullscreen(player, id)
@@ -334,9 +347,14 @@ function traincam.on_click(player, element)
   elseif element.name == "traincam-settings" then
     traincam.open_settings_window(player, id)
   elseif element.name == "traincam-settings-close" then
+    -- On force la destruction, même si la caméra cible n'existe plus
+    local settings_ui = player.gui.screen["traincam-settings-" .. tostring(id)]
+    if settings_ui and settings_ui.valid then
+      settings_ui.destroy()
+    end
+
     local data = get_player_data(player)
-    if data.cameras[id] and data.cameras[id].settings_main then
-      data.cameras[id].settings_main.destroy()
+    if data.cameras[id] then
       data.cameras[id].settings_main = nil
     end
   elseif element.name == "traincam-settings-apply" then
