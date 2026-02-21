@@ -16,5 +16,14 @@ data:extend({
       minimum_value = 1,
       maximum_value = 14,
       order = "b"
+    },
+    {
+      type = "double-setting",
+      name = "traincam-tracking-speed",
+      setting_type = "runtime-per-user",
+      default_value = 0.1,
+      minimum_value = 0.01,
+      maximum_value = 1,
+      order = "c"
     }
   })
