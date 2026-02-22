@@ -113,7 +113,9 @@ function gui.open_window(player, cam_state)
         type = "camera",
         name = "traincam-camera",
         surface_index = cam_state.target.surface.index,
-        position = {cam_state.x, cam_state.y}
+        position = {cam_state.x, cam_state.y},
+        tags = tags,
+        tooltip = {"gui.traincam-tooltip-camera"}
     }
 
     if fullscreen then

@@ -173,9 +173,16 @@ function traincam.on_click(player, element)
         if data.cameras[id] then
             data.cameras[id].settings_main = nil
         end
+    elseif element.name == "traincam-camera" then
+        local data = get_player_data(player)
+        local cam_state = data.cameras[id]
+        if cam_state and cam_state.target and cam_state.target.valid then
+            player.opened = cam_state.target
+        end
     elseif element.name == "traincam-settings-apply" then
         traincam.apply_settings(player, id)
     end
+
 end
 
 function traincam.on_confirmed(player, element)
