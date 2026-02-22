@@ -196,8 +196,34 @@ end
 
 function traincam.tick()
     if not storage.traincam_players then return end
+    storage.train_odometers = storage.train_odometers or {}
+
+    local interval = settings.global["traincam-odometer-interval"].value
+    if interval == 0 then
+        storage.dynamic_interval = storage.dynamic_interval or 10
+        if game.tick % 300 == 0 then
+            local train_count = #game.train_manager.get_trains({})
+            storage.dynamic_interval = math.max(1, math.min(60, math.floor(train_count / 10)))
+        end
+        interval = storage.dynamic_interval
+    end
+
+    if game.tick % interval == 0 then
+        local all_trains = game.train_manager.get_trains({})
+        for _, train in pairs(all_trains) do
+            if train and train.valid then
+                local speed = math.abs(train.speed)
+                if speed > 0 then
+                    storage.train_odometers[train.id] = (storage.train_odometers[train.id] or 0) + (speed * interval)
+                end
+            end
+        end
+    end
+
 
     local should_update_titles = (game.tick % 60 == 0)
+    local should_update_telemetry = (game.tick % 10 == 0)
+
 
     for player_index, data in pairs(storage.traincam_players) do
         local player = game.get_player(player_index)
@@ -207,6 +233,7 @@ function traincam.tick()
 
             for id, cam_state in pairs(data.cameras) do
                 local target = cam_state.target
+                local train = target.train
 
                 if target and target.valid then
                     if should_update_titles and player and cam_state.title_label and cam_state.title_label.valid then
@@ -217,6 +244,33 @@ function traincam.tick()
                             local train_id = target.train and target.train.id or "?"
                             cam_state.title_label.caption = {"", {"gui.traincam-title"}, " - N°", train_id}
                         end
+                    end
+
+                    if should_update_telemetry and train and train.valid then
+
+                        if cam_state.label_speed and cam_state.label_speed.valid then
+                            local speed_kmh = math.floor(math.abs(train.speed) * 216)
+                            cam_state.label_speed.caption = {"gui.traincam-speed", speed_kmh}
+                        end
+
+                        if cam_state.label_next and cam_state.label_next.valid then
+                            local dest_name = {"gui.traincam-dest-none"}
+                            if train.schedule and train.schedule.records and #train.schedule.records > 0 then
+                                local current_record = train.schedule.records[train.schedule.current]
+                                if current_record and current_record.station then
+                                    dest_name = current_record.station
+                                end
+                            end
+                            cam_state.label_next.caption = {"gui.traincam-dest", dest_name}
+                        end
+
+                        if cam_state.label_travel and cam_state.label_travel.valid then
+                            local distance = storage.train_odometers[train.id] or 0
+                            local dist_km = string.format("%.2f", distance / 1000)
+                            cam_state.label_travel.caption = {"gui.traincam-travel-dist", dist_km}
+                        end
+
+
                     end
 
                     local pos = target.position

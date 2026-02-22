@@ -116,6 +116,40 @@ function gui.open_window(player, cam_state)
     camera.style.minimal_width = 200
     camera.style.minimal_height = 200
 
+
+    local settings = player.mod_settings
+
+    local show_speed = cam_state.show_speed
+    if show_speed == nil then show_speed = settings["traincam-default-show-train-speed"].value end
+
+    local show_next = cam_state.show_next
+    if show_next == nil then show_next = settings["traincam-default-show-next-station"].value end
+
+    local show_travel = cam_state.show_travel
+    if show_travel == nil then show_travel = settings["traincam-default-show-distance-traveled"].value end
+
+
+    if show_travel or show_next or show_speed then
+        local telemetry = main.add {
+            type = "frame",
+            style = "inside_shallow_frame_with_padding",
+            direction = "vertical"
+        }
+        telemetry.style.top_margin = 4
+        telemetry.style.horizontally_stretchable = true
+
+        if show_speed then
+            cam_state.label_speed = telemetry.add {type = "label", caption = {"gui.traincam-speed", "0"}}
+        end
+        if show_next then
+            cam_state.label_next = telemetry.add {type = "label", caption = {"gui.traincam-dest", "..."}}
+        end
+        if show_travel then
+            cam_state.label_travel = telemetry.add {type = "label", caption = {"gui.traincam-travel-dist", "0"}}
+        end
+    end
+
+
     cam_state.main = main
     cam_state.camera = camera
 end
