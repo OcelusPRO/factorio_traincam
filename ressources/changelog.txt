@@ -1,0 +1,29 @@
+---------------------------------------------------------------------------------------------------
+Version: 1.0.6
+Date: 22. 02. 2026
+  Features:
+    - Added /close-all-cam command to instantly close all open cameras.
+    - Window position is now restored to its original location when exiting fullscreen mode.
+  Changes:
+    - Multiplayer optimization: Camera tracking logic is now fully suspended for offline players.
+    - Major code refactoring (separated logic and GUI into distinct modules for cleaner architecture).
+  Bugfixes:
+    - Fixed camera position on toggle full screen
+    - Fixed camera size on setting change if full screen is active
+    - Fixed re-open camera for existing train cam now close the camera
+
+---------------------------------------------------------------------------------------------------
+Version: 1.0.5
+Date: 21. 02. 2026
+  Features:
+    - Added Per-Player Mod Settings to configure default window size, zoom level, and tracking speed.
+    - Added an in-game settings menu (gear icon) on each camera window to adjust size and zoom on the fly.
+  Bugfixes:
+    - Fixed an issue where the settings window would become orphaned and unclosable if the main camera was closed first.
+
+---------------------------------------------------------------------------------------------------
+Version: 1.0.4
+Date: 20. 02. 2026
+  Features:
+    - Window titles are now dynamic and display the actual Factorio Train ID.
+    - Added a special "Holy train" ("Sainte locomotive") title if there is only one train on the current surface.
