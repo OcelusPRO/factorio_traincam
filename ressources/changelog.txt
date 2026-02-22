@@ -1,4 +1,20 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.1
+Date: 22. 02. 2026
+  Bugfixes:
+    - Add missing changelog
+
+
+---------------------------------------------------------------------------------------------------
+Version: 1.1.0
+Date: 22. 02. 2026
+  Features:
+    - Added a real-time telemetry panel displaying the train's current speed, next station, and total distance traveled (odometer).
+    - Added toggle checkboxes in the camera settings menu to show or hide individual telemetry metrics.
+    - The odometer persistently tracks the distance of all trains on the server, even when no camera is active.
+    - Added a new global map setting to control the odometer's update frequency (defaults to an auto-scaling mode to protect server UPS).
+
+---------------------------------------------------------------------------------------------------
 Version: 1.0.6
 Date: 22. 02. 2026
   Features:

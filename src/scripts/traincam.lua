@@ -16,20 +16,32 @@ end
 function traincam.apply_settings(player, id)
     local data = get_player_data(player)
     local cam_state = data.cameras[id]
+    if not cam_state then return end
 
-    if cam_state and cam_state.settings_size_input and cam_state.settings_size_input.valid then
+    if cam_state.settings_size_input and cam_state.settings_size_input.valid then
         local new_size = tonumber(cam_state.settings_size_input.text)
         if new_size then
             if new_size < 150 then new_size = 150 end
             if new_size > 5000 then new_size = 5000 end
             cam_state.size = new_size
-            local main_ui = player.gui.screen["traincam-frame-" .. tostring(id)]
-            if main_ui and main_ui.valid then
-                if not cam_state.fullscreen then
-                    main_ui.style.size = {new_size, new_size}
-                end
-            end
         end
+    end
+
+    if cam_state.settings_cb_speed and cam_state.settings_cb_speed.valid then
+        cam_state.show_speed = cam_state.settings_cb_speed.state
+    end
+    if cam_state.settings_cb_next and cam_state.settings_cb_next.valid then
+        cam_state.show_next = cam_state.settings_cb_next.state
+    end
+    if cam_state.settings_cb_travel and cam_state.settings_cb_travel.valid then
+        cam_state.show_travel = cam_state.settings_cb_travel.state
+    end
+
+    local main_ui = player.gui.screen["traincam-frame-" .. tostring(id)]
+    if main_ui and main_ui.valid then
+        cam_state.screen_pos = main_ui.location
+        main_ui.destroy()
+        gui.open_window(player, cam_state)
     end
 
     local settings_ui = player.gui.screen["traincam-settings-" .. tostring(id)]
@@ -37,9 +49,7 @@ function traincam.apply_settings(player, id)
         settings_ui.destroy()
     end
 
-    if cam_state then
-        cam_state.settings_main = nil
-    end
+    cam_state.settings_main = nil
 end
 
 function traincam.add_target(player, entity)
@@ -50,11 +60,12 @@ function traincam.add_target(player, entity)
         traincam.close_camera(player, id)
         return
     end
-    
+
     data.next_id = data.next_id + 1
 
-    local default_zoom = player.mod_settings["traincam-default-zoom"].value
-    local default_size = player.mod_settings["traincam-default-size"].value
+    local settings = player.mod_settings
+    local default_zoom = settings["traincam-default-zoom"].value
+    local default_size = settings["traincam-default-size"].value
 
     local cam_state = {
         id = id,
@@ -63,6 +74,9 @@ function traincam.add_target(player, entity)
         y = entity.position.y,
         zoom = default_zoom,
         size = default_size,
+        show_speed = settings["traincam-default-show-train-speed"].value,
+        show_next = settings["traincam-default-show-next-station"].value,
+        show_travel = settings["traincam-default-show-distance-traveled"].value,
         fullscreen = false
     }
 

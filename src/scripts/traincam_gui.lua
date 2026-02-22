@@ -9,7 +9,7 @@ function gui.get_cam_size(player, cam_state)
         return {resolution.width / scale, resolution.height / scale}
     else
         local s = cam_state.size or player.mod_settings["traincam-default-size"].value
-        return {s, s}
+        return s
     end
 end
 
@@ -26,7 +26,10 @@ function gui.open_window(player, cam_state)
     }
 
     local size = gui.get_cam_size(player, cam_state)
-    main.style.size = size
+
+    if fullscreen then
+        main.style.size = size
+    end
 
     if not fullscreen and cam_state.screen_pos then
         main.location = cam_state.screen_pos
@@ -105,17 +108,21 @@ function gui.open_window(player, cam_state)
         type = "frame",
         style = "inside_shallow_frame"
     }
+
     local camera = content.add {
         type = "camera",
         name = "traincam-camera",
         surface_index = cam_state.target.surface.index,
         position = {cam_state.x, cam_state.y}
     }
-    camera.style.horizontally_stretchable = true
-    camera.style.vertically_stretchable = true
-    camera.style.minimal_width = 200
-    camera.style.minimal_height = 200
 
+    if fullscreen then
+        camera.style.horizontally_stretchable = true
+        camera.style.vertically_stretchable = true
+    else
+        camera.style.width = size
+        camera.style.height = size
+    end
 
     local settings = player.mod_settings
 
@@ -127,7 +134,6 @@ function gui.open_window(player, cam_state)
 
     local show_travel = cam_state.show_travel
     if show_travel == nil then show_travel = settings["traincam-default-show-distance-traveled"].value end
-
 
     if show_travel or show_next or show_speed then
         local telemetry = main.add {
@@ -148,7 +154,6 @@ function gui.open_window(player, cam_state)
             cam_state.label_travel = telemetry.add {type = "label", caption = {"gui.traincam-travel-dist", "0"}}
         end
     end
-
 
     cam_state.main = main
     cam_state.camera = camera
@@ -215,6 +220,24 @@ function gui.open_settings_window(player, id, cam_state)
         tags = tags
     }
     zoom_slider.style.width = 120
+
+    -- === Télémétrie : Cases à cocher ===
+    local options_flow = content.add {type = "flow", direction = "vertical"}
+    options_flow.style.top_margin = 8
+
+    local settings = player.mod_settings
+    local cur_speed = cam_state.show_speed
+    if cur_speed == nil then cur_speed = settings["traincam-default-show-train-speed"].value end
+
+    local cur_next = cam_state.show_next
+    if cur_next == nil then cur_next = settings["traincam-default-show-next-station"].value end
+
+    local cur_travel = cam_state.show_travel
+    if cur_travel == nil then cur_travel = settings["traincam-default-show-distance-traveled"].value end
+
+    cam_state.settings_cb_speed = options_flow.add {type = "checkbox", name = "traincam-cb-speed", caption = {"gui.traincam-setting-show-speed"}, state = cur_speed, tags = tags}
+    cam_state.settings_cb_next = options_flow.add {type = "checkbox", name = "traincam-cb-next", caption = {"gui.traincam-setting-show-next"}, state = cur_next, tags = tags}
+    cam_state.settings_cb_travel = options_flow.add {type = "checkbox", name = "traincam-cb-travel", caption = {"gui.traincam-setting-show-travel"}, state = cur_travel, tags = tags}
 
     local buttons = frame.add {type = "flow", direction = "horizontal"}
     buttons.style.horizontal_align = "right"
