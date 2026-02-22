@@ -27,7 +27,12 @@ function gui.open_window(player, cam_state)
 
     local size = gui.get_cam_size(player, cam_state)
     main.style.size = size
-    main.auto_center = true
+
+    if not fullscreen and cam_state.screen_pos then
+        main.location = cam_state.screen_pos
+    else
+        main.auto_center = true
+    end
 
     local title_bar = main.add {type = "flow", direction = "horizontal"}
     title_bar.style.vertical_align = "center"

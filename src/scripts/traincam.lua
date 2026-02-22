@@ -127,6 +127,7 @@ function traincam.toggle_fullscreen(player, id)
 
         target_cam.fullscreen = true
         if target_cam.main and target_cam.main.valid then
+            target_cam.screen_pos = target_cam.main.location
             target_cam.main.destroy()
         end
         gui.open_window(player, target_cam)
