@@ -36,4 +36,5 @@ http-client.private.env.json
 
 
 
-build/
+build/dist/
+build/temp/
