@@ -229,7 +229,7 @@ function traincam.tick()
         interval = storage.dynamic_interval
     end
 
-    if game.tick % interval == 0 then
+    if game.tick % interval == 0 and interval ~= -1 then
         local all_trains = game.train_manager.get_trains({})
         for _, train in pairs(all_trains) do
             if train and train.valid then

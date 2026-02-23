@@ -46,7 +46,7 @@ data:extend({
         name = "traincam-odometer-interval",
         setting_type = "runtime-global",
         default_value = 0,
-        minimum_value = 0,
+        minimum_value = -1,
         maximum_value = 300
     }
   })
